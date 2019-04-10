@@ -4,10 +4,7 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 
-// Reference: https://github.com/acads/csc573-p2p/blob/master/src/p2p_client.c
-
 #define PORT 7734
-
 
 using std::cout;
 using std::endl;
