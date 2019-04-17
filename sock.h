@@ -13,28 +13,42 @@ using std::string;
 using std::cin;
 using std::map;
 
+class ActivePeersRepository {
+private:
+    std::map<string, string> hostPortMap_;
+public:
+    typedef std::map<string, string>::iterator APIter;
+    void add(string hostname, string port) {
+        hostPortMap_[hostname] = port;
+    }
+     APIter lookup(string hostname) {
+        return hostPortMap_.find(hostname);
+    }
+};
+
 class RFCIndexRepository {
 public:
     typedef pair<string, string> HostPort;
-
+    typedef std::multimap<string, HostPort>::iterator IndexIter;
 private:
-    std::map<string, HostPort> field_value_map_;
+    std::multimap<string, HostPort> field_value_map_;
 public:
     void add(string rfcNo, const HostPort& hostport) {
         // If multithreaded critical section begins
-        field_value_map_[rfcNo] = hostport;
+        field_value_map_.insert(make_pair(rfcNo, hostport));
         // critical section ends
 
     }
 
-    string lookup() {
+    IndexIter lookup(string rfcNo) {
         // If multithreaded critical section begins
 
-        return "";
+        return field_value_map_.find(rfcNo);
         // critical section ends
     }
 
     void list() {
+        istringstream ss;
         cout << "listing index" << endl;
         for (auto iter : field_value_map_) {
             cout << "Host " <<  iter.second.first << endl;
@@ -85,13 +99,27 @@ public:
 
                 ServerRequestMessage svrReq;
                 svrReq.unpack(buffer);
-                svrReq.format();
+                ServerRequestMessage::METHOD method = svrReq.method_;
 
-                RFCIndexRepository::HostPort hostPort =
-                    make_pair(svrReq.hostname_, svrReq.port_);
-                rfcIndex.add(svrReq.rfc_, hostPort);
-                rfcIndex.list();
+                ServerResponseMessage svrResponse;
 
+                switch (method) {
+                case ServerRequestMessage::METHOD::ADD: {
+                    RFCIndexRepository::HostPort hostPort =
+                        make_pair(svrReq.hostname_, svrReq.port_);
+                    rfcIndex.add(svrReq.rfc_, hostPort);
+                    break;
+                }
+                case ServerRequestMessage::METHOD::LIST: {
+                    rfcIndex.list();
+                    break;
+                }
+                case ServerRequestMessage::METHOD::LOOKUP: {
+                    auto iter = rfcIndex.lookup(svrReq.rfc_);
+                    break;
+                }
+                }
+                // svrReq.format();
                 if (string(buffer) == "-1")
                     break;
 
