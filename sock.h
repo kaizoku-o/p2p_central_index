@@ -1,15 +1,17 @@
 #include "iostream"
-
+#include "map"
+#include "message.h"
 #include <unistd.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
 
-#define PORT 7734
+#define PORT 9721
 
 using std::cout;
 using std::endl;
 using std::string;
 using std::cin;
+using std::map;
 
 class Packet {
 private:
@@ -51,11 +53,21 @@ public:
             new_sock = accept(sockfd, (struct sockaddr*) &address,
                               (socklen_t*) &addrlen);
 
-            char buffer[1024] = {0};
-            int vals = read(new_sock, buffer, 1024);
-            cout << buffer << endl;
-            string server_message = "Hi there client";
-            send(new_sock, server_message.c_str(), server_message.length(), 0);
+            while (true) {
+                char buffer[1024] = {0};
+                int vals = read(new_sock, buffer, 1024);
+
+                ServerRequestMessage svrReq;
+                svrReq.unpack(buffer);
+                svrReq.format();
+
+                if (string(buffer) == "-1")
+                    break;
+
+                string server_message = "Hi there client";
+                send(new_sock, server_message.c_str(), 
+                    server_message.length(), 0);
+            }
         }
     }
 };
@@ -71,13 +83,17 @@ public:
     }
 
     void send_msg(string message) {
+        cout << "in send msg " << endl;
         send(client_sock_fd_, message.c_str(), message.length(), 0);
     }
 
-    void get_msg() {
+    string get_msg() {
         char buffer[1024] = {0};
         int vals = read(client_sock_fd_, buffer, 1024);
-        cout << buffer << endl;
+        if (vals == -1) {
+            cout << "Error" << endl;
+        }
+        return string(buffer);
     }
 
     void create_client() {
@@ -88,9 +104,6 @@ public:
             cout << "Connection failed" << endl;
             assert(0);
         }
-
-        send_msg("Hi there server");
-        get_msg();
     }
 
     int client_sock_fd_;

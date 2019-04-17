@@ -1,4 +1,5 @@
 #include "sock.h"
+#include "message.h"
 
 int main() {
     int choice;
@@ -12,6 +13,30 @@ int main() {
     case 1:
         Client client;
         client.create_client();
+
+        string choice;
+        string recv_msg;
+        while (true) {
+            cin >> choice;
+
+            if (choice != "-1") {
+                ServerRequestMessage srv_req("localhost",
+                                             "7793", "SOME RFC",
+                                             "125",
+                                             "1.0",
+                                             ServerRequestMessage::METHOD::ADD);
+
+
+                string msg;
+                srv_req.pack(msg);
+                client.send_msg(msg);
+                recv_msg = client.get_msg();
+                cout << "Received message is: " << recv_msg << endl;
+            }
+            else
+                break;
+
+        }
     }
     return 0;
 }
