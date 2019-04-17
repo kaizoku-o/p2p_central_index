@@ -13,16 +13,42 @@ using std::string;
 using std::cin;
 using std::map;
 
-class Packet {
+class RFCIndexRepository {
+public:
+    typedef pair<string, string> HostPort;
+
 private:
-    string method_;
-    string rfc_no_;
-    std::map<string, string> field_value_map_;
+    std::map<string, HostPort> field_value_map_;
+public:
+    void add(string rfcNo, const HostPort& hostport) {
+        // If multithreaded critical section begins
+        field_value_map_[rfcNo] = hostport;
+        // critical section ends
+
+    }
+
+    string lookup() {
+        // If multithreaded critical section begins
+
+        return "";
+        // critical section ends
+    }
+
+    void list() {
+        cout << "listing index" << endl;
+        for (auto iter : field_value_map_) {
+            cout << "Host " <<  iter.second.first << endl;
+            cout << "Port " << iter.second.second << endl;
+        }
+        cout << "list ends " << endl;
+    }
 };
 
 class Server {
 public:
     void create_server() {
+        RFCIndexRepository rfcIndex;
+
         int sockfd = socket(AF_INET, SOCK_STREAM, 0);
         int opt = 1;
         setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR |
@@ -60,6 +86,11 @@ public:
                 ServerRequestMessage svrReq;
                 svrReq.unpack(buffer);
                 svrReq.format();
+
+                RFCIndexRepository::HostPort hostPort =
+                    make_pair(svrReq.hostname_, svrReq.port_);
+                rfcIndex.add(svrReq.rfc_, hostPort);
+                rfcIndex.list();
 
                 if (string(buffer) == "-1")
                     break;

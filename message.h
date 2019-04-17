@@ -72,6 +72,7 @@ public:
     string hostname_;
     string port_;
     string title_;
+    // rfc_ should be of type integer
     string rfc_;
     string version_;
     METHOD method_;
