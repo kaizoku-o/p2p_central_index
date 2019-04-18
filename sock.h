@@ -37,12 +37,10 @@ public:
         // If multithreaded critical section begins
         field_value_map_.insert(make_pair(rfcNo, hostport));
         // critical section ends
-
     }
 
     IndexIter lookup(string rfcNo) {
         // If multithreaded critical section begins
-
         return field_value_map_.find(rfcNo);
         // critical section ends
     }
@@ -190,26 +188,39 @@ public:
             new_sock = accept(sockfd, (struct sockaddr*) &address,
                               (socklen_t*) &addrlen);
 
-            while (true) {
-                char buffer[1024] = {0};
-                int vals = read(new_sock, buffer, 1024);
+            char buffer[1024] = {0};
+            int vals = read(new_sock, buffer, 1024);
 
-                string server_message = "Hi there fellow client! I am a peer!";
-                send(new_sock, server_message.c_str(),
-                    server_message.length(), 0);
-            }
+            PeerRequestMessage prms;
+            prms.unpack(buffer);
+
+            prms.format();
+
+            string server_message = "Hi there fellow client! I am a peer!";
+            cout << "server is sending the message " << server_message << endl;
+
+            PeerResponseMessage pRespMsg();
+            send(new_sock, server_message.c_str(),
+                 server_message.length(), 0);
         }
     }
 };
 
 class Client {
 public:
+    Client(string server_ip, int port) :
+        server_ip_("127.0.0.1"), client_sock_fd_(-1) {
+        serv_addr_.sin_family = AF_INET;
+        serv_addr_.sin_addr.s_addr = inet_addr(server_ip_.c_str());
+        serv_addr_.sin_port = htons(port);
+    }
+
     Client() : server_ip_("127.0.0.1"), client_sock_fd_(-1) {
         memset(&serv_addr_, '0', sizeof(serv_addr_));
         serv_addr_.sin_family = AF_INET;
         // Convert ip from string to binary
         serv_addr_.sin_addr.s_addr = inet_addr(server_ip_.c_str());
-        serv_addr_.sin_port = htons(PORT);
+        serv_addr_.sin_port = htons(5760);
     }
 
     void send_msg(string message) {

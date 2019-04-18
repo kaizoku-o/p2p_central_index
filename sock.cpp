@@ -11,7 +11,37 @@ int main(int argc, char* argv[]) {
         server.create_server();
         break;
 
-    case 1:
+    case 2: {
+        cout << "This is the peer server" << endl;
+        P2Server p2Server(5760);
+        p2Server.create_server();
+
+        break;
+    }
+    case 3: {
+        cout << "This is the peer client" << endl;
+        PeerRequestMessage prms("localhost", "MAC OS",
+                                PeerRequestMessage::METHOD::GET,
+                                "123",
+                                VERSION);
+        string msg;
+        prms.pack(msg);
+        string p2ServerIP = "127.0.0.1";
+        int p2ServerPort = 5760;
+        Client client(p2ServerIP, p2ServerPort);
+        client.create_client();
+        // int retryCounter = 3;
+
+        string recv_msg;
+
+        client.send_msg(msg);
+        recv_msg = client.get_msg();
+
+        cout << "Received message: " << recv_msg << endl;
+        break;
+    }
+
+    case 1: {
         if (argc < 2) {
             cout << "Incorrect number of parameters" << endl;
             cout << "Usage: ./sock port_num " << endl;
@@ -91,6 +121,7 @@ int main(int argc, char* argv[]) {
                 break;
 
         }
+    }
     }
     return 0;
 }

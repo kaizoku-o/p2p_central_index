@@ -2,62 +2,15 @@
 #include <sstream>
 #include "string"
 #include "vector"
+#include <chrono>
+#include <ctime>
+
 #include <numeric>
 
 using namespace std;
 
 #ifndef MESSAGE_H
 #define MESSAGE_H
-
-class BaseMessage {
-public:
-    virtual void format() = 0;
-    virtual void pack(string& bytes) = 0;
-    virtual void unpack(const string& bytes) = 0;
-};
-
-class PeerRequestMessage : public BaseMessage {
-public:
-    typedef enum {GET, POST} METHOD;
-
-    string hostname_;
-    string operatingSystem_;
-    int method_;
-    string rfc_;
-    string version_;
-
-    void format() {
-
-    }
-
-    void pack(char* bytes) {
-
-    }
-
-    void unpack(char* bytes) {
-
-    }
-};
-
-class PeerResponseMessage : public BaseMessage {
-public:
-    typedef enum {OK, BAD_REQUEST, NOT_FOUND, VERSION_NOT_SUPPORTED} STATUS_CODE;
-    string date_;
-    string os_;
-    string last_mod;
-    string length_;
-    string type_;
-    int status_code;
-
-    void format() {
-    }
-
-    void pack(char* bytes) {
-    }
-
-    void unpack(char* bytes) {
-    }
-};
 
 static const string TITLE = "Title";
 static const string ADD = "ADD";
@@ -72,6 +25,109 @@ static const string BAD = "400 Bad Request";
 static const string NOT_FOUND = "404 Not Found";
 static const string UNSUPPORTED = "505 P2P-CI Version Not Supported";
 static const string VERSION = "P2P-CI/1.0";
+static const string GET = "GET";
+static const string OS = "OS";
+static const string DATE = "DATE";
+
+
+class BaseMessage {
+public:
+    virtual void format() = 0;
+    virtual void pack(string& bytes) = 0;
+    virtual void unpack(const string& bytes) = 0;
+};
+
+class PeerRequestMessage : public BaseMessage {
+public:
+    enum class METHOD {GET, POST};
+    PeerRequestMessage() { }
+    PeerRequestMessage(string hostname, string os,
+                       PeerRequestMessage::METHOD method,
+                       string rfc, string version) :
+        hostname_(hostname), os_(os), method_(method),
+        rfc_(rfc), version_(version) { }
+
+    string hostname_;
+    string os_;
+    METHOD method_;
+    string rfc_;
+    string version_;
+
+    void format() {
+        cout << "***********In Peer Request Format**********" << endl;
+        cout << "RFC: " << rfc_ << endl;
+        cout << "Version: " << version_ << endl;
+        cout << "Host: " << hostname_ << endl;
+        cout << "OS: " << os_ << endl;
+        cout << "*******************************************" << endl;
+    }
+
+    void pack(string& packet) {
+        packet += GET + " ";
+        packet += RFC + " ";
+        packet += rfc_ + " ";
+        packet += version_ + "\n";
+
+        packet += HOST + ":" + " " + hostname_  + "\n";
+        packet += OS + ": " + os_;
+    }
+
+    void unpack(const string& packet) {
+        std::stringstream ss(packet);
+        std::istream_iterator<std::string> begin(ss);
+        std::istream_iterator<std::string> end;
+        std::vector<std::string> vstrings(begin, end);
+
+        if (vstrings[0].find_first_of(GET) != std::string::npos) {
+            method_ = METHOD::GET;
+        }
+
+        if (vstrings[1].find_first_of(RFC) != std::string::npos) {
+            rfc_ = vstrings[2];
+        }
+        version_ = vstrings[3];
+        hostname_ = vstrings[5];
+
+        for (int i = 7; i < vstrings.size(); i++)
+            os_ += vstrings[i] + " ";
+    }
+};
+
+class PeerResponseMessage : public BaseMessage {
+public:
+    enum class STATUS_CODE {OK, BAD_REQUEST, NOT_FOUND, VERSION_NOT_SUPPORTED};
+
+    PeerResponseMessage() {}
+
+    PeerResponseMessage(string os, string last_mod, string length, string type,
+                        string date, STATUS_CODE method) :
+        date_(date), os_(os), last_mod_(last_mod), length_(length), type_(type),
+        status_code_(method) {}
+
+    string date_;
+    string os_;
+    string last_mod_;
+    string length_;
+    string type_;
+    STATUS_CODE status_code_;
+
+    void format() {
+
+    }
+
+    void pack(string& packet) {
+        packet += VERSION + " ";
+        packet += OK + " \n";
+        packet += DATE + ": ";
+        auto end = std::chrono::system_clock::now();
+        std::time_t end_time = std::chrono::system_clock::to_time_t(end);
+        packet += std::ctime(&end_time);
+    }
+
+    void unpack(const string& bytes) {
+
+    }
+};
 
 class ServerRequestMessage : public BaseMessage {
 public:
