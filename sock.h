@@ -21,19 +21,19 @@ public:
     void add(string hostname, string port) {
         hostPortMap_[hostname] = port;
     }
-     APIter lookup(string hostname) {
-        return hostPortMap_.find(hostname);
+     string lookup(string hostname) {
+         return hostPortMap_[hostname];
     }
 };
 
 class RFCIndexRepository {
 public:
-    typedef pair<string, string> HostPort;
-    typedef std::multimap<string, HostPort>::iterator IndexIter;
+    typedef pair<string, string> HostTitle;
+    typedef std::multimap<string, HostTitle>::iterator IndexIter;
 private:
-    std::multimap<string, HostPort> field_value_map_;
+    std::multimap<string, HostTitle> field_value_map_;
 public:
-    void add(string rfcNo, const HostPort& hostport) {
+    void add(string rfcNo, const HostTitle& hostport) {
         // If multithreaded critical section begins
         field_value_map_.insert(make_pair(rfcNo, hostport));
         // critical section ends
@@ -62,6 +62,7 @@ class Server {
 public:
     void create_server() {
         RFCIndexRepository rfcIndex;
+        ActivePeersRepository activeIndex;
 
         int sockfd = socket(AF_INET, SOCK_STREAM, 0);
         int opt = 1;
@@ -101,13 +102,13 @@ public:
                 svReq.unpack(buffer);
                 ServerRequestMessage::METHOD method = svReq.method_;
 
-                ServerResponseMessage svResponse;
-
                 switch (method) {
                 case ServerRequestMessage::METHOD::ADD: {
-                    RFCIndexRepository::HostPort hostPort =
-                        make_pair(svReq.hostname_, svReq.port_);
-                    rfcIndex.add(svReq.rfc_, hostPort);
+                    ServerResponseMessage svResponse;
+                    RFCIndexRepository::HostTitle hostTitle =
+                        make_pair(svReq.hostname_, svReq.title_);
+                    rfcIndex.add(svReq.rfc_, hostTitle);
+                    activeIndex.add(svReq.hostname_, svReq.port_);
 
                     svResponse.rfc_ = svReq.rfc_;
                     svResponse.title_ = svReq.title_;
@@ -125,7 +126,17 @@ public:
                     break;
                 }
                 case ServerRequestMessage::METHOD::LOOKUP: {
+                    ServerResponseMessage svResponse;
                     auto iter = rfcIndex.lookup(svReq.rfc_);
+                    svResponse.rfc_ = iter->first;
+                    svResponse.hostname_ = iter->second.first;
+                    svResponse.title_ = iter->second.second;
+                    svResponse.port_ = activeIndex.lookup(iter->second.first);
+                    svResponse.status_ = ServerResponseMessage::STATUS_CODE::OK;
+
+                    string msg;
+                    svResponse.pack(msg);
+                    send(new_sock, msg.c_str(), msg.length(), 0);
                     break;
                 }
                 }
@@ -135,6 +146,56 @@ public:
 
                 string server_message = "Hi there client";
                 send(new_sock, server_message.c_str(), 
+                    server_message.length(), 0);
+            }
+        }
+    }
+};
+
+class P2Server {
+private:
+    P2Server() { }
+    int peerPort_;
+public:
+    P2Server(int peerPort) : peerPort_(peerPort) { }
+
+    void create_server() {
+        int sockfd = socket(AF_INET, SOCK_STREAM, 0);
+        int opt = 1;
+        setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR |
+                   SO_REUSEPORT, &opt,
+                   sizeof(opt));
+
+        struct sockaddr_in address;
+        int addrlen = sizeof(address);
+        address.sin_family = AF_INET;
+        address.sin_addr.s_addr = htonl(INADDR_ANY);
+        address.sin_port = htons(peerPort_);
+
+        int bnd = ::bind(sockfd, (struct sockaddr*) &address,
+                       sizeof(address));
+        if (bnd < 0) {
+            cout << "Could not bind" << endl;
+            assert(0);
+        }
+
+        int ls = listen(sockfd, 128);
+        if (ls < 0) {
+            cout << "Could not listen" << endl;
+            assert(0);
+        }
+
+        while (true) {
+            int new_sock;
+            new_sock = accept(sockfd, (struct sockaddr*) &address,
+                              (socklen_t*) &addrlen);
+
+            while (true) {
+                char buffer[1024] = {0};
+                int vals = read(new_sock, buffer, 1024);
+
+                string server_message = "Hi there fellow client! I am a peer!";
+                send(new_sock, server_message.c_str(),
                     server_message.length(), 0);
             }
         }
