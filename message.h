@@ -64,6 +64,11 @@ static const string RFC = "RFC";
 static const string HOST = "Host";
 static const string PORT_NUM = "Port";
 static const string ALL = "ALL";
+static const string OK = "200 OK";
+static const string BAD = "400 Bad Request";
+static const string NOT_FOUND = "404 Not Found";
+static const string UNSUPPORTED = "505 P2P-CI Version Not Supported";
+static const string VERSION = "P2P-CI/1.0";
 
 class ServerRequestMessage : public BaseMessage {
 public:
@@ -263,11 +268,31 @@ public:
     string title_;
     string hostname_;
     string port_;
+    STATUS_CODE status_;
 
     void format() {
     }
 
     void pack(string& packet) {
+        packet += VERSION + " ";
+
+        switch (status_) {
+        case STATUS_CODE::OK:
+            packet += OK + "\n";
+            packet += RFC + " " + rfc_ + " " + TITLE + " " +
+                title_ + " " + HOST + " " + hostname_ + " " +
+                port_ + "\n";
+            break;
+        case STATUS_CODE::BAD_REQUEST:
+            packet += BAD + "\n";
+            break;
+        case STATUS_CODE::NOT_FOUND:
+            packet += NOT_FOUND + "\n";
+            break;
+        case STATUS_CODE::VERSION_NOT_SUPPORTED:
+            packet += UNSUPPORTED + "\n";
+            break;
+        }
     }
     void unpack(const string& bytes) {
     }

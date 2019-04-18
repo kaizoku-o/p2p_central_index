@@ -97,17 +97,27 @@ public:
                 char buffer[1024] = {0};
                 int vals = read(new_sock, buffer, 1024);
 
-                ServerRequestMessage svrReq;
-                svrReq.unpack(buffer);
-                ServerRequestMessage::METHOD method = svrReq.method_;
+                ServerRequestMessage svReq;
+                svReq.unpack(buffer);
+                ServerRequestMessage::METHOD method = svReq.method_;
 
-                ServerResponseMessage svrResponse;
+                ServerResponseMessage svResponse;
 
                 switch (method) {
                 case ServerRequestMessage::METHOD::ADD: {
                     RFCIndexRepository::HostPort hostPort =
-                        make_pair(svrReq.hostname_, svrReq.port_);
-                    rfcIndex.add(svrReq.rfc_, hostPort);
+                        make_pair(svReq.hostname_, svReq.port_);
+                    rfcIndex.add(svReq.rfc_, hostPort);
+
+                    svResponse.rfc_ = svReq.rfc_;
+                    svResponse.title_ = svReq.title_;
+                    svResponse.hostname_ = svReq.hostname_;
+                    svResponse.port_ = svReq.port_;
+                    svResponse.status_ = ServerResponseMessage::STATUS_CODE::OK;
+
+                    string msg;
+                    svResponse.pack(msg);
+                    send(new_sock, msg.c_str(), msg.length(), 0);
                     break;
                 }
                 case ServerRequestMessage::METHOD::LIST: {
@@ -115,7 +125,7 @@ public:
                     break;
                 }
                 case ServerRequestMessage::METHOD::LOOKUP: {
-                    auto iter = rfcIndex.lookup(svrReq.rfc_);
+                    auto iter = rfcIndex.lookup(svReq.rfc_);
                     break;
                 }
                 }

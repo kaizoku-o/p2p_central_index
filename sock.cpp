@@ -19,10 +19,9 @@ int main() {
         string recv_msg;
         while (true) {
             cin >> choice;
-            // cout << choice << endl;
+            cout << choice << endl;
 
             if (choice == ADD) {
-                // cout << "in new " << endl;
 
                 ServerRequestMessage srv_req("localhost",
                                              "7793", "SOME RFC",
@@ -35,10 +34,9 @@ int main() {
                 srv_req.pack(msg);
                 client.send_msg(msg);
                 recv_msg = client.get_msg();
-                // cout << "Received message is: " << recv_msg << endl;
+                cout << recv_msg << endl;
             }
             else if (choice == LOOKUP) {
-                // cout << "in new " << endl;
 
                 ServerRequestMessage srv_req("localhost",
                                              "7793", "SOME RFC",
@@ -51,10 +49,9 @@ int main() {
                 srv_req.pack(msg);
                 client.send_msg(msg);
                 recv_msg = client.get_msg();
-                // cout << "Received message is: " << recv_msg << endl;
+                cout << recv_msg << endl;
             }
             else if (choice == LIST) {
-                // cout << "in new " << endl;
 
                 ServerRequestMessage srv_req("localhost",
                                              "7793", "SOME RFC",
@@ -67,7 +64,7 @@ int main() {
                 srv_req.pack(msg);
                 client.send_msg(msg);
                 recv_msg = client.get_msg();
-                // cout << "Received message is: " << recv_msg << endl;
+                cout  << recv_msg << endl;
             }
             else
                 break;
