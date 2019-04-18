@@ -1,6 +1,9 @@
 #include <iostream>
 #include <sstream>
 #include "string"
+#include "vector"
+#include <numeric>
+
 using namespace std;
 
 #ifndef MESSAGE_H
@@ -268,9 +271,16 @@ public:
     string title_;
     string hostname_;
     string port_;
+    string version_;
     STATUS_CODE status_;
 
     void format() {
+        cout << "********IN FORMAT***********" << endl;
+        cout << RFC << " " << rfc_ << endl;
+        cout << HOST << " " << hostname_ << endl;
+        cout << PORT_NUM << " " << port_ << endl;
+        cout << TITLE << " " << title_ << endl;
+        cout << "****************************" << endl;
     }
 
     void pack(string& packet) {
@@ -279,9 +289,9 @@ public:
         switch (status_) {
         case STATUS_CODE::OK:
             packet += OK + "\n";
-            packet += RFC + " " + rfc_ + " " + TITLE + " " +
-                title_ + " " + HOST + " " + hostname_ + " " +
-                port_ + "\n";
+            packet += RFC + " " + rfc_ + " " +
+                title_  + " " + hostname_ + " " +
+                " " + port_ + "\n";
             break;
         case STATUS_CODE::BAD_REQUEST:
             packet += BAD + "\n";
@@ -294,7 +304,40 @@ public:
             break;
         }
     }
-    void unpack(const string& bytes) {
+    void unpack(const string& packet) {
+        std::stringstream ss(packet);
+        // First line has the status
+        char line_char[1024];
+        ss.getline(line_char, 1024, '\n');
+        string line(line_char);
+
+        std::stringstream linestream(line);
+        std::istream_iterator<std::string> begin(linestream);
+        std::istream_iterator<std::string> end;
+        std::vector<std::string> vstrings(begin, end);
+
+        version_ = vstrings[0];
+
+        string status_code = vstrings[1];
+        if (status_code.find("200") != std::string::npos) {
+            status_ = STATUS_CODE::OK;
+
+            char line_char[1024];
+            ss.getline(line_char, 1024, '\n');
+            string line(line_char);
+            std::stringstream linestream(line);
+            std::istream_iterator<std::string> begin(linestream);
+            std::istream_iterator<std::string> end;
+            std::vector<std::string> vstrings(begin, end);
+
+            rfc_ = vstrings[1];
+            hostname_ = vstrings[vstrings.size() - 2];
+            port_ = vstrings[vstrings.size() - 1];
+
+            for (int i = 2; i < vstrings.size() - 2; i++) {
+                title_ += vstrings[i] + " ";
+            }
+        }
     }
 };
 

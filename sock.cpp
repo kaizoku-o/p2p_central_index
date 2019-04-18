@@ -34,6 +34,12 @@ int main() {
                 srv_req.pack(msg);
                 client.send_msg(msg);
                 recv_msg = client.get_msg();
+
+                ServerResponseMessage resp_msg;
+                resp_msg.unpack(recv_msg);
+                resp_msg.format();
+
+                cout << endl << endl;
                 cout << recv_msg << endl;
             }
             else if (choice == LOOKUP) {
