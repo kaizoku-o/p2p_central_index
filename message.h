@@ -9,6 +9,7 @@
 #include <ctime>
 #include "read.h"
 #include <numeric>
+#include <iterator>
 
 using namespace std;
 
