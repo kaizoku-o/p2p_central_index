@@ -1,16 +1,16 @@
+#ifndef MESSAGE_H
+#define MESSAGE_H
+
 #include <iostream>
 #include <sstream>
 #include "string"
 #include "vector"
 #include <chrono>
 #include <ctime>
-
+#include "read.h"
 #include <numeric>
 
 using namespace std;
-
-#ifndef MESSAGE_H
-#define MESSAGE_H
 
 static const string TITLE = "Title";
 static const string ADD = "ADD";
@@ -28,7 +28,19 @@ static const string VERSION = "P2P-CI/1.0";
 static const string GET = "GET";
 static const string OS = "OS";
 static const string DATE = "DATE";
+static const string LAST_MOD = "Last-Modified";
+static const string LEN = "Content-Length";
+static const string TYPE = "Content-Type";
 
+bool hasStr(const string& lhs, const string& rhs, bool strict = false) {
+    if (strict) {
+        return lhs.find_first_of(rhs) != std::string::npos;
+    }
+    else {
+        return lhs.find_first_of(rhs) != std::string::npos or
+            rhs.find_first_of(lhs) != std::string::npos;
+    }
+}
 
 class BaseMessage {
 public:
@@ -99,20 +111,34 @@ public:
 
     PeerResponseMessage() {}
 
-    PeerResponseMessage(string os, string last_mod, string length, string type,
-                        string date, STATUS_CODE method) :
-        date_(date), os_(os), last_mod_(last_mod), length_(length), type_(type),
-        status_code_(method) {}
+    PeerResponseMessage(string os, vector<string> last_mod,
+                        vector<string> length, vector<string> type,
+                        vector<vector<string>> fc,
+                        STATUS_CODE method) :
+        os_(os), last_mod_(last_mod), length_(length), type_(type),
+        file_content(fc), status_code_(method) {}
 
-    string date_;
     string os_;
-    string last_mod_;
-    string length_;
-    string type_;
+    vector<string> last_mod_;
+    vector<string> length_;
+    vector<string> type_;
+    vector<vector<string>> file_content;
     STATUS_CODE status_code_;
+    string date_;
+    string version_;
 
     void format() {
+        cout << "******In peer respose format******" << endl;
+        cout << version_ << " " << OK << endl;
+        cout << DATE << ": " << date_ << endl;
+        cout << OS << ": " << os_ << endl;
+        cout << LAST_MOD << ": " << (last_mod_.back()) << endl;
+        cout << LEN << ": " << (length_.back()) << endl;
+        cout << TYPE << ": " << (type_.back()) << endl;
 
+        for (auto iter : (file_content.back()))
+            cout << iter << endl;
+        cout << "**********************************" << endl;
     }
 
     void pack(string& packet) {
@@ -122,9 +148,54 @@ public:
         auto end = std::chrono::system_clock::now();
         std::time_t end_time = std::chrono::system_clock::to_time_t(end);
         packet += std::ctime(&end_time);
+
+        packet += OS + ": " + os_ + "\n";
+
+        for (int i = 0; i < length_.size(); i++) {
+
+            packet += LAST_MOD + ":" +  last_mod_[i] + "\n";
+            packet += LEN + ":" + length_[i] + "\n";
+            packet += TYPE + ":" + type_[i] + "\n";
+            vector<string> fc = file_content[i];
+
+            for (auto iter : fc) {
+                packet += iter + "\n";
+            }
+        }
+
     }
 
-    void unpack(const string& bytes) {
+    void unpack(const string& packet) {
+        std::stringstream ss(packet);
+        char line_char[4096];
+
+        ss.getline(line_char, 1024, '\n');
+        string linestring(line_char);
+
+        version_ = linestring.substr(0, 10);
+
+        ss.getline(line_char, 1024, '\n');
+        date_ = string(&line_char[5]);
+
+        ss.getline(line_char, 1024, '\n');
+        os_ = string(&line_char[4]);
+
+        ss.getline(line_char, 1024, '\n');
+        last_mod_.push_back(string(&line_char[LAST_MOD.size() + 1]));
+
+        ss.getline(line_char, 1024, '\n');
+        length_.push_back(string(&line_char[LEN.size() + 1]));
+
+        ss.getline(line_char, 1024, '\n');
+        type_.push_back(string(&line_char[TYPE.size() + 1]));
+
+
+        // store the file
+        vector<string> rfc_content;
+        while(ss.getline(line_char, 1024))
+            rfc_content.push_back(string(line_char));
+
+        file_content.push_back(rfc_content);
 
     }
 };

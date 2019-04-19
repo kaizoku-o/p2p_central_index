@@ -13,7 +13,7 @@ int main(int argc, char* argv[]) {
 
     case 2: {
         cout << "This is the peer server" << endl;
-        P2Server p2Server(5760);
+        P2Server p2Server(5763);
         p2Server.create_server();
 
         break;
@@ -27,7 +27,7 @@ int main(int argc, char* argv[]) {
         string msg;
         prms.pack(msg);
         string p2ServerIP = "127.0.0.1";
-        int p2ServerPort = 5760;
+        int p2ServerPort = 5763;
         Client client(p2ServerIP, p2ServerPort);
         client.create_client();
         // int retryCounter = 3;
@@ -37,7 +37,12 @@ int main(int argc, char* argv[]) {
         client.send_msg(msg);
         recv_msg = client.get_msg();
 
-        cout << "Received message: " << recv_msg << endl;
+        PeerResponseMessage prsp;
+        prsp.unpack(recv_msg);
+
+        vector<string> fc = prsp.file_content.back();
+        // get fc and write to disk
+        prsp.format();
         break;
     }
 
@@ -76,10 +81,10 @@ int main(int argc, char* argv[]) {
 
                 ServerResponseMessage resp_msg;
                 resp_msg.unpack(recv_msg);
-                resp_msg.format();
+                // resp_msg.format();
 
                 cout << endl << endl;
-                // cout << recv_msg << endl;
+                cout << recv_msg << endl;
             }
             else if (choice == LOOKUP) {
 

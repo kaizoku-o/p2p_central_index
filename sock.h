@@ -150,6 +150,7 @@ public:
     }
 };
 
+
 class P2Server {
 private:
     P2Server() { }
@@ -196,12 +197,42 @@ public:
 
             prms.format();
 
-            string server_message = "Hi there fellow client! I am a peer!";
-            cout << "server is sending the message " << server_message << endl;
+            // string server_message = "Hi there fellow client! I am a peer!";
+            // cout << "server is sending the message " << server_message << endl;
 
-            PeerResponseMessage pRespMsg();
-            send(new_sock, server_message.c_str(),
-                 server_message.length(), 0);
+            vector<string> rfc_fnames;
+            FileHandler::read_directory(rfc_fnames);
+
+            string os("MAC OS");
+            vector<string> last_mod;
+            vector<string> length;
+            vector<string> type;
+            vector<vector<string>> file_content;
+
+            for (auto rfc_fname : rfc_fnames) {
+                // add check for which rfc you want
+                // if (rfc_fname != some_rfc)
+                // continue;
+
+                string modTime;
+                vector<string> vectStr;
+                int size;
+                FileHandler::getStrArray(vectStr, rfc_fname, size, modTime);
+                string fc;
+                last_mod.push_back(modTime);
+                length.push_back(std::to_string(size));
+                type.push_back(string("text/text"));
+                file_content.push_back(vectStr);
+            }
+
+            PeerResponseMessage pRespMsg(os, last_mod, length, type,
+                                         file_content,
+                                         PeerResponseMessage::STATUS_CODE::OK);
+
+            string resp_msg;
+            pRespMsg.pack(resp_msg);
+            send(new_sock, resp_msg.c_str(),
+                 resp_msg.length(), 0);
         }
     }
 };
@@ -229,8 +260,8 @@ public:
     }
 
     string get_msg() {
-        char buffer[1024] = {0};
-        int vals = read(client_sock_fd_, buffer, 1024);
+        char buffer[4096] = {0};
+        int vals = read(client_sock_fd_, buffer, 4096);
         if (vals == -1) {
             cout << "Error" << endl;
         }
