@@ -60,6 +60,10 @@ int main(int argc, char* argv[]) {
         cout << "Enter client port (peer server): " << endl;
         cin >> peer_port;
 
+        string client_ip;
+        cout << "Enter my ip: " << endl;
+        cin >> client_ip;
+
         Client client(server_ip, server_port);
         client.create_client();
 
@@ -71,12 +75,38 @@ int main(int argc, char* argv[]) {
         while (true) {
             cin >> choice;
             if (choice == ADD) {
+                // Change this if you want to use the code. Can cause buffer
+                // overflow
+                char buff[1024];
+                const static string EOC = "END OF COMMAND";
+                string stat;
 
-                ServerRequestMessage srv_req("localhost",
-                                             "7793", "SOME RFC",
+                string cmd(ADD);
+
+                while (true) {
+                    string c_wd;
+                    cin.getline(buff, 1024);
+                    c_wd = string(buff);
+                    if (c_wd == "EOCEOCEOC") {
+                        break;
+                    }
+                    cmd += c_wd + "\n";
+                }
+
+                cout << " received cmd:\n ";
+
+                ServerRequestMessage srv_req;
+                srv_req.unpack(cmd);
+                //req2.format();
+
+                /*
+                ServerRequestMessage srv_req(client_ip,
+                                             std::to_string(peer_port), 
+                                             "SOME RFC",
                                              "128",
-                                             "1.0",
+                                             VERSION,
                                              ServerRequestMessage::METHOD::ADD);
+                */
 
                 string msg;
                 srv_req.pack(msg);
