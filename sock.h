@@ -1,3 +1,4 @@
+// vim : et ts=4 sw=4
 #include "iostream"
 #include "map"
 #include "message.h"
@@ -6,6 +7,7 @@
 #include <arpa/inet.h>
 #include <assert.h>
 #include <string.h>
+#include <pthread.h>
 
 #define PORT 9721
 
@@ -60,41 +62,14 @@ public:
 
 class Server {
 public:
-    void create_server() {
-        RFCIndexRepository rfcIndex;
-        ActivePeersRepository activeIndex;
+    RFCIndexRepository rfcIndex;
+    ActivePeersRepository activeIndex;
 
-        int sockfd = socket(AF_INET, SOCK_STREAM, 0);
-        int opt = 1;
-        setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR |
-                   SO_REUSEPORT, &opt,
-                   sizeof(opt));
+    Server() { }
 
-        struct sockaddr_in address;
-        int addrlen = sizeof(address);
-        address.sin_family = AF_INET;
-        address.sin_addr.s_addr = htonl(INADDR_ANY);
-        address.sin_port = htons(PORT);
-
-        int bnd = ::bind(sockfd, (struct sockaddr*) &address,
-                       sizeof(address));
-        if (bnd < 0) {
-            cout << "Could not bind" << endl;
-            assert(0);
-        }
-
-        int ls = listen(sockfd, 128);
-        if (ls < 0) {
-            cout << "Could not listen" << endl;
-            assert(0);
-        }
-
-        while (true) {
-            int new_sock;
-            new_sock = accept(sockfd, (struct sockaddr*) &address,
-                              (socklen_t*) &addrlen);
-
-            while (true) {
+    void server_thread(void* client_sock) {
+	    int new_sock = *(int*)(client_sock);
+	    while (true) {
                 char buffer[1024] = {0};
                 int vals = read(new_sock, buffer, 1024);
 
@@ -148,6 +123,43 @@ public:
                 send(new_sock, server_message.c_str(), 
                     server_message.length(), 0);
             }
+    }
+
+
+    void create_server() {
+        RFCIndexRepository rfcIndex;
+        ActivePeersRepository activeIndex;
+
+        int sockfd = socket(AF_INET, SOCK_STREAM, 0);
+        int opt = 1;
+        setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR |
+                   SO_REUSEPORT, &opt,
+                   sizeof(opt));
+
+        struct sockaddr_in address;
+        int addrlen = sizeof(address);
+        address.sin_family = AF_INET;
+        address.sin_addr.s_addr = htonl(INADDR_ANY);
+        address.sin_port = htons(PORT);
+
+        int bnd = ::bind(sockfd, (struct sockaddr*) &address,
+                       sizeof(address));
+        if (bnd < 0) {
+            cout << "Could not bind" << endl;
+            assert(0);
+        }
+
+        int ls = listen(sockfd, 128);
+        if (ls < 0) {
+            cout << "Could not listen" << endl;
+            assert(0);
+        }
+
+        while (true) {
+            int new_sock;
+            new_sock = accept(sockfd, (struct sockaddr*) &address,
+                              (socklen_t*) &addrlen);
+	    server_thread(&new_sock);
         }
     }
 };

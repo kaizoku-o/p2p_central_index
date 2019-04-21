@@ -6,7 +6,7 @@ TARGET = sock
 # Libraries to use, objects to compile
 SRCS = sock.cpp
 SRCS_FILES = $(foreach F, $(SRCS), ./$(F))
-CXX_FLAGS = --std=c++11
+CXX_FLAGS = -lpthread --std=c++11
 
 # Make it all!
 all : sock.o

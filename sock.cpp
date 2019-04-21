@@ -7,11 +7,11 @@ int main(int argc, char* argv[]) {
     cout << "0 for Server 1 for Client" << endl;
     cin >> choice;
     switch (choice) {
-    case 0:
+    case 0: {
         Server server;
         server.create_server();
         break;
-
+    }
     case 2: {
         cout << "This is the peer server" << endl;
         P2Server p2Server(5763);
