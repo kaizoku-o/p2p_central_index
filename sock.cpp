@@ -1,3 +1,4 @@
+// vim: et ts=4 sw=4
 #include "sock.h"
 #include "message.h"
 
@@ -47,17 +48,23 @@ int main(int argc, char* argv[]) {
     }
 
     case 1: {
-        if (argc < 2) {
-            cout << "Incorrect number of parameters" << endl;
-            cout << "Usage: ./sock port_num " << endl;
-            exit(0);
-        }
-        Client client;
+        cout << "Enter server ip:" << endl;
+        string server_ip;
+        cin >> server_ip;
+
+        int server_port;
+        cout << "Enter server port:" << endl;
+        cin >> server_port; 
+
+        int peer_port;
+        cout << "Enter client port (peer server): " << endl;
+        cin >> peer_port;
+
+        Client client(server_ip, server_port);
         client.create_client();
 
-        int port_num = atoi(argv[1]);
         /* Should spawn a thread here to listen serve fellow peers */
-        P2Server p2server(port_num);
+        P2Server p2server(peer_port);
         // P2Server create_server()
 
         string choice;

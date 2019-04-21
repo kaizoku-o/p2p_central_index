@@ -242,7 +242,7 @@ public:
 class Client {
 public:
     Client(string server_ip, int port) :
-        server_ip_("127.0.0.1"), client_sock_fd_(-1) {
+        server_ip_(server_ip), client_sock_fd_(-1) {
         serv_addr_.sin_family = AF_INET;
         serv_addr_.sin_addr.s_addr = inet_addr(server_ip_.c_str());
         serv_addr_.sin_port = htons(port);
