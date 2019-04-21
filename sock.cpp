@@ -103,7 +103,6 @@ int main(int argc, char* argv[]) {
                     cmd += c_wd + "\n";
                 }
 
-                cout << " received cmd:\n ";
 
                 ServerRequestMessage srv_req;
                 srv_req.unpack(cmd);
@@ -125,16 +124,11 @@ int main(int argc, char* argv[]) {
                 cout << "Got a message from server " << endl << endl;
                 resp_msg.unpack(recv_msg);
                 resp_msg.format();
-                cout << "resp_msg hostname size is " << resp_msg.hostname_.size();
                 if (resp_msg.hostname_.empty())
                     continue;
-                cout << "resp msg hosntame is " << resp_msg.hostname_[0] << endl;
                 string p2ServerIP = resp_msg.hostname_[0];
-                string p2ServerPort = resp_msg.port_[0];
+                string p2ServerPort = "9722"; //resp_msg.port_[0];
 
-                cout << "***********" << endl;
-                cout << p2ServerIP << endl;
-                cout << p2ServerPort << endl;
                 PeerRequestMessage prms(client_ip, "MAC OS",
                         PeerRequestMessage::METHOD::GET,
                         srv_req.rfc_,
@@ -148,8 +142,8 @@ int main(int argc, char* argv[]) {
                 client2.create_client();
                 client2.send_msg(p2rms);
                 string p2resp;
-                p2resp = client.get_msg();
-                cout << "Got response from peer server" << endl;
+                p2resp = client2.get_msg();
+                cout << "Got response from peer server" << endl << endl;
                 cout << p2resp;
                 cout << endl;
                 // cout << recv_msg << endl;
