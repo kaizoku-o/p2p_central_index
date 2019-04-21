@@ -68,11 +68,8 @@ int main(int argc, char* argv[]) {
         // P2Server create_server()
 
         string choice;
-        string recv_msg;
         while (true) {
             cin >> choice;
-            cout << choice << endl;
-
             if (choice == ADD) {
 
                 ServerRequestMessage srv_req("localhost",
@@ -84,7 +81,7 @@ int main(int argc, char* argv[]) {
                 string msg;
                 srv_req.pack(msg);
                 client.send_msg(msg);
-                recv_msg = client.get_msg();
+                string recv_msg = client.get_msg();
 
                 ServerResponseMessage resp_msg;
                 resp_msg.unpack(recv_msg);
@@ -101,15 +98,14 @@ int main(int argc, char* argv[]) {
                                              "1.0",
                                              ServerRequestMessage::METHOD::LOOKUP);
 
-                int retryCounter = 3;
+                cout << "Sending lookup request to server" << endl;
                 ServerResponseMessage resp_msg;
-                while (retryCounter--) {
-                    string msg;
-                    srv_req.pack(msg);
-                    client.send_msg(msg);
-                    recv_msg = client.get_msg();
-                    resp_msg.unpack(recv_msg);
-                }
+                string msg;
+                srv_req.pack(msg);
+                client.send_msg(msg);
+                string recv_msg = client.get_msg();
+                cout << "Got a message from server " << endl << endl;
+                resp_msg.unpack(recv_msg);
                 resp_msg.format();
                 // cout << endl;
                 // cout << recv_msg << endl;
@@ -123,11 +119,16 @@ int main(int argc, char* argv[]) {
                                              ServerRequestMessage::METHOD::LIST);
 
 
+                cout << "Sending list request to servrer" << endl;
                 string msg;
                 srv_req.pack(msg);
                 client.send_msg(msg);
-                recv_msg = client.get_msg();
-                cout  << recv_msg << endl;
+
+                ServerResponseMessage resp_msg;
+                string recv_msg = client.get_msg();
+                cout << "Got a reply from server " << endl << endl;
+                resp_msg.unpack(recv_msg);
+                resp_msg.format();
             }
             else
                 break;
