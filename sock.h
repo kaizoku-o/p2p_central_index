@@ -99,10 +99,12 @@ public:
                     break;
                 }
                 case ServerRequestMessage::METHOD::LIST: {
-                    rfcIndex.list();
+		    cout << "In list" << endl;
+                    //rfcIndex.list();
 		    ServerResponseMessage svResponse;
 		    svResponse.status_ = ServerResponseMessage::STATUS_CODE::OK;
 		    for (auto iter : rfcIndex.field_value_map_) {
+			cout << "Iterating over field value map " << endl;
 			string host = iter.second.first; // host
 			string title = iter.second.second; // title
 			string port = activeIndex.lookup(host); // port
@@ -114,6 +116,7 @@ public:
 		    }
 		    string msg;
 		    svResponse.pack(msg);
+		    cout << "Sending msg " << msg << endl;
 		    send(new_sock, msg.c_str(), msg.length(), 0);
                     break;
                 }
@@ -136,10 +139,6 @@ public:
                 // svrReq.format();
                 if (string(buffer) == "-1")
                     break;
-
-                string server_message = "Hi there client";
-                send(new_sock, server_message.c_str(), 
-                    server_message.length(), 0);
             }
     }
 
