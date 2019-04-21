@@ -7,9 +7,11 @@
 #include <arpa/inet.h>
 #include <assert.h>
 #include <string.h>
-#include <pthread.h>
+#include "thread"
 
 #define PORT 9721
+int num_thread = 256; // This is the maximum amount of client connections
+		      // we are going to support
 
 using std::cout;
 using std::endl;
@@ -63,24 +65,23 @@ public:
     RFCIndexRepository rfcIndex;
     ActivePeersRepository activeIndex;
 
-    Server() { }
-
-    void server_thread(void* client_sock) {
-	    int new_sock = *(int*)(client_sock);
+    void server_thread(int new_sock) {
 	    while (true) {
-		cout << "Im in server thread and trying to read from"
-		    "new client sock" << endl;
+		//cout << "Im in server thread and trying to read from"
+		  //  "new client sock" << endl;
                 char buffer[4096] = {0};
-                int vals = read(new_sock, buffer, 4096);
-		cout << "Read from the socket" << endl;
+
+		int  vals = read(new_sock, buffer, 4096);
+		if (string(buffer).empty()) {
+		    cout << "Disconnecting from a client..." << endl;
+		    return;
+		}
 
                 ServerRequestMessage svReq;
-		cout << "unpacking request" << endl;
                 svReq.unpack(buffer);
                 ServerRequestMessage::METHOD method = svReq.method_;
 
-                switch (method) {
-                case ServerRequestMessage::METHOD::ADD: {
+                if (method == ServerRequestMessage::METHOD::ADD) {
                     ServerResponseMessage svResponse;
                     RFCIndexRepository::HostTitle hostTitle =
                         make_pair(svReq.hostname_, svReq.title_);
@@ -96,15 +97,11 @@ public:
                     string msg;
                     svResponse.pack(msg);
                     send(new_sock, msg.c_str(), msg.length(), 0);
-                    break;
                 }
-                case ServerRequestMessage::METHOD::LIST: {
-		    cout << "In list" << endl;
-                    //rfcIndex.list();
+                else if (method == ServerRequestMessage::METHOD::LIST) {
 		    ServerResponseMessage svResponse;
 		    svResponse.status_ = ServerResponseMessage::STATUS_CODE::OK;
 		    for (auto iter : rfcIndex.field_value_map_) {
-			cout << "Iterating over field value map " << endl;
 			string host = iter.second.first; // host
 			string title = iter.second.second; // title
 			string port = activeIndex.lookup(host); // port
@@ -116,11 +113,9 @@ public:
 		    }
 		    string msg;
 		    svResponse.pack(msg);
-		    cout << "Sending msg " << msg << endl;
 		    send(new_sock, msg.c_str(), msg.length(), 0);
-                    break;
                 }
-                case ServerRequestMessage::METHOD::LOOKUP: {
+                else if (method == ServerRequestMessage::METHOD::LOOKUP) {
                     ServerResponseMessage svResponse;
                     auto iter = rfcIndex.lookup(svReq.rfc_);
                     svResponse.rfc_.push_back(iter->first);
@@ -133,20 +128,17 @@ public:
                     string msg;
                     svResponse.pack(msg);
                     send(new_sock, msg.c_str(), msg.length(), 0);
-                    break;
                 }
-                }
-                // svrReq.format();
-                if (string(buffer) == "-1")
-                    break;
+		else {
+		    return;
+		}
             }
     }
 
 
     void create_server() {
-        RFCIndexRepository rfcIndex;
-        ActivePeersRepository activeIndex;
-
+	RFCIndexRepository rfcIndex;
+	ActivePeersRepository activeIndex;
         int sockfd = socket(AF_INET, SOCK_STREAM, 0);
         int opt = 1;
         setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR |
@@ -171,12 +163,13 @@ public:
             cout << "Could not listen" << endl;
             assert(0);
         }
-
         while (true) {
             int new_sock;
             new_sock = accept(sockfd, (struct sockaddr*) &address,
                               (socklen_t*) &addrlen);
-	    server_thread(&new_sock);
+
+	    std::thread t (&Server::server_thread, this, new_sock);
+	    t.detach();
         }
     }
 };
