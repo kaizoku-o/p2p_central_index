@@ -181,8 +181,14 @@ private:
     int peerPort_;
 public:
     P2Server(int peerPort) : peerPort_(peerPort) { }
-
+    
     void create_server() {
+	cout << "In client create server" << endl;
+
+	std::thread t(&P2Server::create_server_thread, this);
+	t.detach();
+    }
+    void create_server_thread() {
         int sockfd = socket(AF_INET, SOCK_STREAM, 0);
         int opt = 1;
         setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR |
@@ -209,6 +215,7 @@ public:
         }
 
         while (true) {
+	    cout << "Im a peer server and I am waiting for connections " << endl;
             int new_sock;
             new_sock = accept(sockfd, (struct sockaddr*) &address,
                               (socklen_t*) &addrlen);
@@ -298,7 +305,7 @@ public:
                 sizeof(serv_addr_));
         if (conn < 0) {
             cout << "Connection failed" << endl;
-            assert(0);
+            //assert(0);
         }
     }
 
