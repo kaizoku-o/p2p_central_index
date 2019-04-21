@@ -34,9 +34,7 @@ class RFCIndexRepository {
 public:
     typedef pair<string, string> HostTitle;
     typedef std::multimap<string, HostTitle>::iterator IndexIter;
-private:
     std::multimap<string, HostTitle> field_value_map_;
-public:
     void add(string rfcNo, const HostTitle& hostport) {
         // If multithreaded critical section begins
         field_value_map_.insert(make_pair(rfcNo, hostport));
@@ -70,10 +68,14 @@ public:
     void server_thread(void* client_sock) {
 	    int new_sock = *(int*)(client_sock);
 	    while (true) {
-                char buffer[1024] = {0};
-                int vals = read(new_sock, buffer, 1024);
+		cout << "Im in server thread and trying to read from"
+		    "new client sock" << endl;
+                char buffer[4096] = {0};
+                int vals = read(new_sock, buffer, 4096);
+		cout << "Read from the socket" << endl;
 
                 ServerRequestMessage svReq;
+		cout << "unpacking request" << endl;
                 svReq.unpack(buffer);
                 ServerRequestMessage::METHOD method = svReq.method_;
 
@@ -85,10 +87,10 @@ public:
                     rfcIndex.add(svReq.rfc_, hostTitle);
                     activeIndex.add(svReq.hostname_, svReq.port_);
 
-                    svResponse.rfc_ = svReq.rfc_;
-                    svResponse.title_ = svReq.title_;
-                    svResponse.hostname_ = svReq.hostname_;
-                    svResponse.port_ = svReq.port_;
+                    svResponse.rfc_.push_back(svReq.rfc_);
+                    svResponse.title_.push_back(svReq.title_);
+                    svResponse.hostname_.push_back(svReq.hostname_);
+                    svResponse.port_.push_back(svReq.port_);
                     svResponse.status_ = ServerResponseMessage::STATUS_CODE::OK;
 
                     string msg;
@@ -98,15 +100,31 @@ public:
                 }
                 case ServerRequestMessage::METHOD::LIST: {
                     rfcIndex.list();
+		    ServerResponseMessage svResponse;
+		    svResponse.status_ = ServerResponseMessage::STATUS_CODE::OK;
+		    for (auto iter : rfcIndex.field_value_map_) {
+			string host = iter.second.first; // host
+			string title = iter.second.second; // title
+			string port = activeIndex.lookup(host); // port
+
+			svResponse.port_.push_back(port);
+			svResponse.hostname_.push_back(host);
+			svResponse.title_.push_back(title);
+			svResponse.rfc_.push_back(iter.first);
+		    }
+		    string msg;
+		    svResponse.pack(msg);
+		    send(new_sock, msg.c_str(), msg.length(), 0);
                     break;
                 }
                 case ServerRequestMessage::METHOD::LOOKUP: {
                     ServerResponseMessage svResponse;
                     auto iter = rfcIndex.lookup(svReq.rfc_);
-                    svResponse.rfc_ = iter->first;
-                    svResponse.hostname_ = iter->second.first;
-                    svResponse.title_ = iter->second.second;
-                    svResponse.port_ = activeIndex.lookup(iter->second.first);
+                    svResponse.rfc_.push_back(iter->first);
+                    svResponse.hostname_.push_back(iter->second.first);
+                    svResponse.title_.push_back(iter->second.second);
+                    svResponse.port_.push_back(activeIndex.lookup(
+			    iter->second.first));
                     svResponse.status_ = ServerResponseMessage::STATUS_CODE::OK;
 
                     string msg;

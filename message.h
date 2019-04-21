@@ -1,3 +1,4 @@
+// vim: et ts=4 sw=4
 #ifndef MESSAGE_H
 #define MESSAGE_H
 
@@ -395,20 +396,28 @@ public:
 class ServerResponseMessage : public BaseMessage {
 public:
     enum class STATUS_CODE {OK, BAD_REQUEST, NOT_FOUND, VERSION_NOT_SUPPORTED};
-    string rfc_;
-    string title_;
-    string hostname_;
-    string port_;
+
+    ServerResponseMessage() { }
+    ServerResponseMessage(vector<string> rfc, vector<string> title,
+                          vector<string> hostname, vector<string> port) :
+        rfc_(rfc), title_(title), hostname_(hostname), port_(port) { }
+
+    vector<string> rfc_;
+    vector<string> title_;
+    vector<string> hostname_;
+    vector<string> port_;
     string version_;
     STATUS_CODE status_;
 
     void format() {
         cout << "********IN FORMAT***********" << endl;
-        cout << RFC << " " << rfc_ << endl;
-        cout << HOST << " " << hostname_ << endl;
-        cout << PORT_NUM << " " << port_ << endl;
-        cout << TITLE << " " << title_ << endl;
-        cout << "****************************" << endl;
+        for (int i = 0; i < rfc_.size(); i++) {
+            cout << RFC << " " << rfc_[i] << endl;
+            cout << HOST << " " << hostname_[i] << endl;
+            cout << PORT_NUM << " " << port_[i] << endl;
+            cout << TITLE << " " << title_[i] << endl;
+            cout << "****************************" << endl;
+        }
     }
 
     void pack(string& packet) {
@@ -417,9 +426,11 @@ public:
         switch (status_) {
         case STATUS_CODE::OK:
             packet += OK + "\n";
-            packet += RFC + " " + rfc_ + " " +
-                title_  + " " + hostname_ + " " +
-                " " + port_ + "\n";
+            for (int i = 0; i < rfc_.size(); i++) {
+                packet += RFC + " " + rfc_[i] + " " +
+                    title_[i]  + " " + hostname_[i] + " " +
+                    " " + port_[i] + "\n";
+            }
             break;
         case STATUS_CODE::BAD_REQUEST:
             packet += BAD + "\n";
@@ -451,19 +462,22 @@ public:
             status_ = STATUS_CODE::OK;
 
             char line_char[1024];
-            ss.getline(line_char, 1024, '\n');
-            string line(line_char);
-            std::stringstream linestream(line);
-            std::istream_iterator<std::string> begin(linestream);
-            std::istream_iterator<std::string> end;
-            std::vector<std::string> vstrings(begin, end);
+            while(ss.getline(line_char, 1024, '\n')) {
+                string line(line_char);
+                std::stringstream linestream(line);
+                std::istream_iterator<std::string> begin(linestream);
+                std::istream_iterator<std::string> end;
+                std::vector<std::string> vstrings(begin, end);
 
-            rfc_ = vstrings[1];
-            hostname_ = vstrings[vstrings.size() - 2];
-            port_ = vstrings[vstrings.size() - 1];
+                rfc_.push_back( vstrings[1]);
+                hostname_.push_back(vstrings[vstrings.size() - 2]);
+                port_.push_back(vstrings[vstrings.size() - 1]);
 
-            for (int i = 2; i < vstrings.size() - 2; i++) {
-                title_ += vstrings[i] + " ";
+                string title;
+                for (int i = 2; i < vstrings.size() - 2; i++) {
+                    title += vstrings[i] + " ";
+                }
+                title_.push_back(title);
             }
         }
     }
