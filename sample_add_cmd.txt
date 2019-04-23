@@ -1,4 +1,11 @@
-ADD RFC 2547 P2P-CI/1.0
-Host: .14.56.193
-Port: 5678
+LOOKUP RFC 2547 P2P-CI/1.0
+Host: 172.31.30.98
+Port: 9723
 Title: BGP/MPLS VPNs
+
+
+
+LOOKUP RFC 2546 P2P-CI/1.0
+Host: 172.31.20.34
+Port: 9723
+Title: 6Bone Routing Practice
