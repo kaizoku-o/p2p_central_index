@@ -12,41 +12,6 @@ int main(int argc, char* argv[]) {
         server.create_server();
         break;
     }
-    case 2: {
-        cout << "This is the peer server" << endl;
-        P2Server p2Server(5763);
-        p2Server.create_server();
-
-        break;
-    }
-    case 3: {
-        cout << "This is the peer client" << endl;
-        PeerRequestMessage prms("localhost", "MAC OS",
-                                PeerRequestMessage::METHOD::GET,
-                                "123",
-                                VERSION);
-        string msg;
-        prms.pack(msg);
-        string p2ServerIP = "127.0.0.1";
-        int p2ServerPort = 5763;
-        Client client(p2ServerIP, p2ServerPort);
-        client.create_client();
-        // int retryCounter = 3;
-
-        string recv_msg;
-
-        client.send_msg(msg);
-        recv_msg = client.get_msg();
-
-        PeerResponseMessage prsp;
-        prsp.unpack(recv_msg);
-
-        vector<string> fc = prsp.file_content.back();
-        // get fc and write to disk
-        prsp.format();
-        break;
-    }
-
     case 1: {
         cout << "Enter server ip:" << endl;
         string server_ip;
@@ -68,8 +33,9 @@ int main(int argc, char* argv[]) {
         client.create_client();
 
         /* Should spawn a thread here to listen serve fellow peers */
-        P2Server p2server(peer_port);
-        // P2Server create_server()
+        P2Server p2server(9722);
+        p2server.create_server();
+        cout << "created peer server " << endl;
 
         string choice;
         while (true) {
@@ -78,7 +44,6 @@ int main(int argc, char* argv[]) {
                 // Change this if you want to use the code. Can cause buffer
                 // overflow
                 char buff[1024];
-                const static string EOC = "END OF COMMAND";
                 string stat;
 
                 string cmd(ADD);
@@ -121,12 +86,34 @@ int main(int argc, char* argv[]) {
                 cout << recv_msg << endl;
             }
             else if (choice == LOOKUP) {
+                // Change this if you want to use the code. Can cause buffer
+                // overflow
+                char buff[1024];
+                string stat;
 
+                string cmd(ADD);
+
+                while (true) {
+                    string c_wd;
+                    cin.getline(buff, 1024);
+                    c_wd = string(buff);
+                    if (c_wd == "EOCEOCEOC") {
+                        break;
+                    }
+                    cmd += c_wd + "\n";
+                }
+
+
+                ServerRequestMessage srv_req;
+                srv_req.unpack(cmd);
+
+                /*
                 ServerRequestMessage srv_req("localhost",
                                              "7793", "SOME RFC",
                                              "128",
                                              "1.0",
                                              ServerRequestMessage::METHOD::LOOKUP);
+                */
 
                 cout << "Sending lookup request to server" << endl;
                 ServerResponseMessage resp_msg;
@@ -137,7 +124,28 @@ int main(int argc, char* argv[]) {
                 cout << "Got a message from server " << endl << endl;
                 resp_msg.unpack(recv_msg);
                 resp_msg.format();
-                // cout << endl;
+                if (resp_msg.hostname_.empty())
+                    continue;
+                string p2ServerIP = resp_msg.hostname_[0];
+                string p2ServerPort = "9722"; //resp_msg.port_[0];
+
+                PeerRequestMessage prms(client_ip, "MAC OS",
+                        PeerRequestMessage::METHOD::GET,
+                        srv_req.rfc_,
+                        VERSION);
+                string p2rms;
+                prms.pack(p2rms);
+                cout << "Sending p2s the message: \n";
+                cout << p2rms << endl;
+
+                Client client2(p2ServerIP, atoi(p2ServerPort.c_str()));
+                client2.create_client();
+                client2.send_msg(p2rms);
+                string p2resp;
+                p2resp = client2.get_msg();
+                cout << "Got response from peer server" << endl << endl;
+                cout << p2resp;
+                cout << endl;
                 // cout << recv_msg << endl;
             }
             else if (choice == LIST) {
