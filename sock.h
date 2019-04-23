@@ -248,8 +248,8 @@ public:
 
             for (auto rfc_fname : rfc_fnames) {
                 // add check for which rfc you want
-                // if (rfc_fname != some_rfc)
-                // continue;
+                if (!hasStr(rfc_fname, prms.rfc_))
+                    continue;
 
                 string modTime;
                 vector<string> vectStr;
