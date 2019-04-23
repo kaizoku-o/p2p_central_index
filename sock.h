@@ -8,10 +8,12 @@
 #include <assert.h>
 #include <string.h>
 #include "thread"
+#include <mutex>
 
 #define PORT 9721
 int num_thread = 256; // This is the maximum amount of client connections
 		      // we are going to support
+std::mutex sv_thread_lock;
 
 using std::cout;
 using std::endl;
@@ -39,13 +41,17 @@ public:
     std::multimap<string, HostTitle> field_value_map_;
     void add(string rfcNo, const HostTitle& hostport) {
         // If multithreaded critical section begins
+        sv_thread_lock.lock();
         field_value_map_.insert(make_pair(rfcNo, hostport));
+        sv_thread_lock.unlock();
         // critical section ends
     }
 
     IndexIter lookup(string rfcNo) {
         // If multithreaded critical section begins
+	sv_thread_lock.lock();
         return field_value_map_.find(rfcNo);
+	sv_thread_lock.unlock();
         // critical section ends
     }
 
