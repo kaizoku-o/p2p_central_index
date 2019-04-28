@@ -1,5 +1,5 @@
 // vim: et ts=4 sw=4
-#include "sock.h"
+#include "p2p.h"
 #include "message.h"
 
 int main(int argc, char* argv[]) {

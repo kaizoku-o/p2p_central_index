@@ -1,19 +1,19 @@
 # This is a GNU Makefile.
 
 # Creating a static library
-TARGET = sock
+TARGET = p2p
 
 # Libraries to use, objects to compile
-SRCS = sock.cpp
+SRCS = p2p.cpp
 SRCS_FILES = $(foreach F, $(SRCS), ./$(F))
 CXX_FLAGS = -pthread --std=c++11
 
 # Make it all!
-all : sock.o
-	g++ $(CXX_FLAGS) sock.o -o $(TARGET)
+all : p2p.o
+	g++ $(CXX_FLAGS) p2p.o -o $(TARGET)
 
-sock.o: sock.cpp
-	g++ $(CXX_FLAGS) sock.cpp -c
+p2p.o: p2p.cpp
+	g++ $(CXX_FLAGS) p2p.cpp -c
 
 # Standard make targets
 clean :
