@@ -36,11 +36,11 @@ static const string TYPE = "Content-Type";
 
 bool hasStr(const string& lhs, const string& rhs, bool strict = false) {
     if (strict) {
-        return lhs.find_first_of(rhs) != std::string::npos;
+        return lhs.find(rhs) != std::string::npos;
     }
     else {
-        return lhs.find_first_of(rhs) != std::string::npos or
-            rhs.find_first_of(lhs) != std::string::npos;
+        return lhs.find(rhs) != std::string::npos or
+            rhs.find(lhs) != std::string::npos;
     }
 }
 
