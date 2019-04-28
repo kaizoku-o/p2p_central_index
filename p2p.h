@@ -41,21 +41,20 @@ class RFCIndexRepository {
 public:
     typedef pair<string, string> HostTitle;
     typedef std::multimap<string, HostTitle>::iterator IndexIter;
+
+    typedef pair<IndexIter, IndexIter> EqualRangeIter;
+
     std::multimap<string, HostTitle> field_value_map_;
     void add(string rfcNo, const HostTitle& hostport) {
-        // If multithreaded critical section begins
-        //sv_thread_lock.lock();
         field_value_map_.insert(make_pair(rfcNo, hostport));
-        //sv_thread_lock.unlock();
-        // critical section ends
     }
 
     IndexIter lookup(string rfcNo) {
-        // If multithreaded critical section begins
-	//sv_thread_lock.lock();
         return field_value_map_.find(rfcNo);
-	//sv_thread_lock.unlock();
-        // critical section ends
+    }
+
+    EqualRangeIter lookup_multi(string rfcNo) {
+	return field_value_map_.equal_range(rfcNo);
     }
 
     void list() {
@@ -102,7 +101,9 @@ public:
 
                 ServerRequestMessage svReq;
                 svReq.unpack(inp_msg);
-		cout << " Got request: " << endl << inp_msg << endl;
+		cout << "-----------------------------------------" << endl;
+		cout << "Got request: " << endl << inp_msg << endl;
+
                 ServerRequestMessage::METHOD method = svReq.method_;
 
                 if (method == ServerRequestMessage::METHOD::ADD) {
@@ -142,16 +143,26 @@ public:
                 }
                 else if (method == ServerRequestMessage::METHOD::LOOKUP) {
                     ServerResponseMessage svResponse;
+
+		    auto iterPair = rfcIndex.lookup_multi(svReq.rfc_);
+		    auto iterBegin = iterPair.first;
+		    auto iterEnd = iterPair.second;
+
+		    // This is just to see if atleast 1 element exists
                     auto iter = rfcIndex.lookup(svReq.rfc_);
 
 		    string msg;
 		    if (iter != rfcIndex.field_value_map_.end()) {
-			svResponse.rfc_.push_back(iter->first);
-			svResponse.hostname_.push_back(iter->second.first);
-			svResponse.title_.push_back(iter->second.second);
-			svResponse.port_.push_back(activeIndex.lookup(
-				    iter->second.first));
 			svResponse.status_ = ServerResponseMessage::STATUS_CODE::OK;
+
+			while (iterBegin != iterEnd) {
+			    svResponse.rfc_.push_back(iterBegin->first);
+			    svResponse.hostname_.push_back(iterBegin->second.first);
+			    svResponse.title_.push_back(iterBegin->second.second);
+			    svResponse.port_.push_back(activeIndex.lookup(
+				    iterBegin->second.first));
+			    ++iterBegin;
+			}
 		    }
 		    else
 			svResponse.status_ = 
