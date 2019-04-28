@@ -47,7 +47,14 @@ public:
             size += str.size();
             vectStr.push_back(str);
         }
+	fp.close();
         modTime = getFileModTime(filename.c_str());
+    }
+
+    static void writeStr(string file_content, string fname) {
+	FILE* fp = fopen(fname.c_str(), "w");
+	fputs(file_content.c_str(), fp);
+	fclose(fp);
     }
 
     // http://www.martinbroadhurst.com/list-the-files-in-a-directory-in-c.html

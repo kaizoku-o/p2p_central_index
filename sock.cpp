@@ -146,6 +146,32 @@ int main(int argc, char* argv[]) {
                 cout << "Got response from peer server" << endl << endl;
                 cout << p2resp;
                 cout << endl;
+
+                PeerResponseMessage peerResp;
+                peerResp.unpack(p2resp);
+                
+                string file_content;
+
+                for (int i = 0; i < peerResp.length_.size(); i++) {
+                    vector<string> fc = peerResp.file_content[i];
+
+                    for (auto iter : fc) {
+                        file_content += iter + "\n";
+                    }
+                }
+                // Write this rfc 
+                string rfc_fname = "RFC/" + srv_req.rfc_ + ".txt";
+                FileHandler::writeStr(file_content, rfc_fname);
+
+
+                // Now send an add request to server
+                srv_req.method_ = ServerRequestMessage::METHOD::ADD;
+                string add_msg;
+                srv_req.pack(add_msg);
+                client.send_msg(add_msg);
+
+                cout << "Got message from bootstrap server: " << endl << endl <<
+                    client.get_msg() << endl << endl;
                 // cout << recv_msg << endl;
             }
             else if (choice == LIST) {

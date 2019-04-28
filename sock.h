@@ -256,7 +256,7 @@ public:
             PeerRequestMessage prms;
             prms.unpack(buffer);
 
-            prms.format();
+            //prms.format();
 
             // string server_message = "Hi there fellow client! I am a peer!";
             // cout << "server is sending the message " << server_message << endl;
