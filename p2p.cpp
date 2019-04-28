@@ -173,7 +173,7 @@ int main(int argc, char* argv[]) {
                 string rfc_fname = "RFC/" + srv_req.rfc_ + ".txt";
                 FileHandler::writeStr(file_content, rfc_fname);
 
-
+                /*
                 // Now send an add request to server
                 srv_req.method_ = ServerRequestMessage::METHOD::ADD;
                 string add_msg;
@@ -187,6 +187,7 @@ int main(int argc, char* argv[]) {
                     client.get_msg() << endl << endl;
                 cout << "----------------------------------------" << endl;
                 // cout << recv_msg << endl;
+                */
             }
             else if (choice == LIST) {
 
