@@ -91,7 +91,7 @@ int main(int argc, char* argv[]) {
                 char buff[1024];
                 string stat;
 
-                string cmd(ADD);
+                string cmd(LOOKUP);
 
                 while (true) {
                     string c_wd;
@@ -123,7 +123,8 @@ int main(int argc, char* argv[]) {
                 string recv_msg = client.get_msg();
                 cout << "Got a message from server " << endl << endl;
                 resp_msg.unpack(recv_msg);
-                resp_msg.format();
+                //resp_msg.format();
+                cout << recv_msg << endl;
                 if (resp_msg.hostname_.empty())
                     continue;
                 string p2ServerIP = resp_msg.hostname_[0];
@@ -166,7 +167,8 @@ int main(int argc, char* argv[]) {
                 string recv_msg = client.get_msg();
                 cout << "Got a reply from server " << endl << endl;
                 resp_msg.unpack(recv_msg);
-                resp_msg.format();
+                //resp_msg.format();
+                cout << recv_msg << endl;
             }
             else
                 break;
