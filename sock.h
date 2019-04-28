@@ -29,8 +29,11 @@ public:
     void add(string hostname, string port) {
         hostPortMap_[hostname] = port;
     }
-     string lookup(string hostname) {
+    string lookup(string hostname) {
          return hostPortMap_[hostname];
+    }
+    void deleteHost(string hostname) {
+	hostPortMap_.erase(hostname);
     }
 };
 
@@ -41,17 +44,17 @@ public:
     std::multimap<string, HostTitle> field_value_map_;
     void add(string rfcNo, const HostTitle& hostport) {
         // If multithreaded critical section begins
-        sv_thread_lock.lock();
+        //sv_thread_lock.lock();
         field_value_map_.insert(make_pair(rfcNo, hostport));
-        sv_thread_lock.unlock();
+        //sv_thread_lock.unlock();
         // critical section ends
     }
 
     IndexIter lookup(string rfcNo) {
         // If multithreaded critical section begins
-	sv_thread_lock.lock();
+	//sv_thread_lock.lock();
         return field_value_map_.find(rfcNo);
-	sv_thread_lock.unlock();
+	//sv_thread_lock.unlock();
         // critical section ends
     }
 
@@ -64,6 +67,16 @@ public:
         }
         cout << "list ends " << endl;
     }
+    void deleteHost(string hostname) {
+	auto rfcIter = field_value_map_.begin();
+	while (rfcIter != field_value_map_.end()) {
+	    if (rfcIter->second.first == hostname) {
+		rfcIter = field_value_map_.erase(rfcIter);
+	    }
+	    else
+		rfcIter++;
+	}
+    }
 };
 
 class Server {
@@ -72,19 +85,24 @@ public:
     ActivePeersRepository activeIndex;
 
     void server_thread(int new_sock) {
+	    string hostname;
 	    while (true) {
 		//cout << "Im in server thread and trying to read from"
 		  //  "new client sock" << endl;
                 char buffer[4096] = {0};
 
 		int  vals = read(new_sock, buffer, 4096);
+		string inp_msg = string(buffer);
 		if (string(buffer).empty()) {
-		    cout << "Disconnecting from a client..." << endl;
+		    cout << "Disconnecting from a client..."  << hostname << endl;
+		    rfcIndex.deleteHost(hostname);
+		    activeIndex.deleteHost(hostname);
 		    return;
 		}
 
                 ServerRequestMessage svReq;
-                svReq.unpack(buffer);
+                svReq.unpack(inp_msg);
+		cout << " Got request: " << endl << inp_msg << endl;
                 ServerRequestMessage::METHOD method = svReq.method_;
 
                 if (method == ServerRequestMessage::METHOD::ADD) {
@@ -99,7 +117,8 @@ public:
                     svResponse.hostname_.push_back(svReq.hostname_);
                     svResponse.port_.push_back(svReq.port_);
                     svResponse.status_ = ServerResponseMessage::STATUS_CODE::OK;
-
+		    
+                    hostname = svReq.hostname_;
                     string msg;
                     svResponse.pack(msg);
                     send(new_sock, msg.c_str(), msg.length(), 0);
@@ -124,15 +143,21 @@ public:
                 else if (method == ServerRequestMessage::METHOD::LOOKUP) {
                     ServerResponseMessage svResponse;
                     auto iter = rfcIndex.lookup(svReq.rfc_);
-                    svResponse.rfc_.push_back(iter->first);
-                    svResponse.hostname_.push_back(iter->second.first);
-                    svResponse.title_.push_back(iter->second.second);
-                    svResponse.port_.push_back(activeIndex.lookup(
-			    iter->second.first));
-                    svResponse.status_ = ServerResponseMessage::STATUS_CODE::OK;
 
-                    string msg;
-                    svResponse.pack(msg);
+		    string msg;
+		    if (iter != rfcIndex.field_value_map_.end()) {
+			svResponse.rfc_.push_back(iter->first);
+			svResponse.hostname_.push_back(iter->second.first);
+			svResponse.title_.push_back(iter->second.second);
+			svResponse.port_.push_back(activeIndex.lookup(
+				    iter->second.first));
+			svResponse.status_ = ServerResponseMessage::STATUS_CODE::OK;
+		    }
+		    else
+			svResponse.status_ = 
+				ServerResponseMessage::STATUS_CODE::NOT_FOUND;
+		    svResponse.pack(msg);
+
                     send(new_sock, msg.c_str(), msg.length(), 0);
                 }
 		else {
@@ -189,7 +214,7 @@ public:
     P2Server(int peerPort) : peerPort_(peerPort) { }
     
     void create_server() {
-	cout << "In client create server" << endl;
+	cout << "Starting upload server on port" << peerPort_ << endl;
 
 	std::thread t(&P2Server::create_server_thread, this);
 	t.detach();
@@ -221,7 +246,6 @@ public:
         }
 
         while (true) {
-	    cout << "Im a peer server and I am waiting for connections " << endl;
             int new_sock;
             new_sock = accept(sockfd, (struct sockaddr*) &address,
                               (socklen_t*) &addrlen);
@@ -292,7 +316,6 @@ public:
     }
 
     void send_msg(string message) {
-        cout << "in send msg " << endl;
         send(client_sock_fd_, message.c_str(), message.length(), 0);
     }
 
