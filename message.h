@@ -34,6 +34,11 @@ static const string LAST_MOD = "Last-Modified";
 static const string LEN = "Content-Length";
 static const string TYPE = "Content-Type";
 
+bool is_number(const std::string& s) {
+    return !s.empty() && s.find_first_not_of("0123456789") == 
+        std::string::npos;
+}
+
 bool hasStr(const string& lhs, const string& rhs, bool strict = false) {
     if (strict) {
         return lhs.find(rhs) != std::string::npos;
@@ -242,7 +247,10 @@ public:
     }
 
     bool hasError() {
-        if (hostname_ == "" or port_ == "" or title_ == "" or rfc_ == "")
+        if (hostname_.empty() or 
+                !is_number(port_) or 
+                !is_number(rfc_) or 
+                title_.empty())
             return true;
         else
             return false;
@@ -305,7 +313,6 @@ public:
     }
 
     void unpack(const string& packet) {
-        // cout << "**unpacking** " << endl;
         istringstream ss(packet);
         string msg_word;
 
@@ -330,6 +337,8 @@ public:
                 ss >> msg_word;
                 rfc_ = msg_word;
             }
+            else
+                return;
 
             ss >> msg_word;
             version_ = msg_word;
@@ -339,18 +348,24 @@ public:
                 ss >> msg_word;
                 hostname_ = msg_word;
             }
+            else
+                return;
 
             ss >> msg_word;
             if (PORT_NUM.find_first_of(msg_word) != std::string::npos) {
                 ss >> msg_word;
                 port_ = msg_word;
             }
+            else
+                return;
 
             ss >> msg_word;
             if (TITLE.find_first_of(msg_word) != std::string::npos) {
                 while (ss >> msg_word)
                     title_ += msg_word + " ";
             }
+            else
+                return;
         break;
         case METHOD::LOOKUP:
             ss >> msg_word;
