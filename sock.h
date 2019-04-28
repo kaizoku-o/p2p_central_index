@@ -214,7 +214,7 @@ public:
     P2Server(int peerPort) : peerPort_(peerPort) { }
     
     void create_server() {
-	cout << "Starting upload server on port" << peerPort << endl;
+	cout << "Starting upload server on port" << peerPort_ << endl;
 
 	std::thread t(&P2Server::create_server_thread, this);
 	t.detach();
