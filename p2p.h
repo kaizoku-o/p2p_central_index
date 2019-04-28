@@ -10,7 +10,7 @@
 #include "thread"
 #include <mutex>
 
-#define PORT 9721
+#define PORT 7734
 int num_thread = 256; // This is the maximum amount of client connections
 		      // we are going to support
 std::mutex sv_thread_lock;
