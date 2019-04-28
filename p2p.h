@@ -101,6 +101,26 @@ public:
 
                 ServerRequestMessage svReq;
                 svReq.unpack(inp_msg);
+
+		if (svReq.hasError()) {
+		    ServerResponseMessage svResponse;
+		    svResponse.status_ = 
+			    ServerResponseMessage::STATUS_CODE::BAD_REQUEST;
+		    string msg;
+		    svResponse.pack(msg);
+		    send(new_sock, msg.c_str(), msg.length(), 0);
+		    continue;
+		}
+
+		if (!svReq.correctVersion()) {
+		    ServerResponseMessage svResponse;
+		    svResponse.status_ = 
+			    ServerResponseMessage::STATUS_CODE::VERSION_NOT_SUPPORTED;
+		    string msg;
+		    svResponse.pack(msg);
+		    send(new_sock, msg.c_str(), msg.length(), 0);
+		    continue;
+		}
 		cout << "-----------------------------------------" << endl;
 		cout << "Got request: " << endl << inp_msg << endl;
 
