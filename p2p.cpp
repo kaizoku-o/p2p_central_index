@@ -4,7 +4,7 @@
 
 int main(int argc, char* argv[]) {
     int choice;
-    cout << "0 for Server 1 for Client" << endl;
+    cout << "0 for Bootstrap Server 1 for Client" << endl;
     cin >> choice;
     switch (choice) {
     case 0: {
@@ -13,12 +13,12 @@ int main(int argc, char* argv[]) {
         break;
     }
     case 1: {
-        cout << "Enter server ip:" << endl;
+        cout << "Enter Bootstrap Server ip:" << endl;
         string server_ip;
         cin >> server_ip;
 
         int server_port;
-        cout << "Enter server port:" << endl;
+        cout << "Enter Bootstrap server port:" << endl;
         cin >> server_port; 
 
         int peer_port;
@@ -35,6 +35,9 @@ int main(int argc, char* argv[]) {
         P2Server p2server(peer_port);
         p2server.create_server();
         cout << "created peer server " << endl;
+        cout << "----------------------------------------" << endl;
+        cout << "Waiting for commands. Add EOCEOCEOC as a delimiter between " 
+                "each command for correct functioning:" << endl;
 
         string choice;
         while (true) {
@@ -114,18 +117,22 @@ int main(int argc, char* argv[]) {
                                              ServerRequestMessage::METHOD::LOOKUP);
                 */
 
-                cout << "Sending lookup request to server" << endl;
+                cout << "----------------------------------------" << endl;
+                cout << "Sending lookup request to Bootstrap Server" << endl;
                 ServerResponseMessage resp_msg;
                 string msg;
                 srv_req.pack(msg);
                 client.send_msg(msg);
                 string recv_msg = client.get_msg();
-                cout << "Got a message from server " << endl << endl;
+                cout << "Got a message from Bootstrap Server " << endl << endl;
                 resp_msg.unpack(recv_msg);
                 //resp_msg.format();
                 cout << recv_msg << endl;
+                cout << "----------------------------------------" << endl;
+
                 if (resp_msg.hostname_.empty())
                     continue;
+
                 string p2ServerIP = resp_msg.hostname_[0];
                 string p2ServerPort = resp_msg.port_[0]; //resp_msg.port_[0];
 
@@ -143,6 +150,7 @@ int main(int argc, char* argv[]) {
                 client2.send_msg(p2rms);
                 string p2resp;
                 p2resp = client2.get_msg();
+                cout << "----------------------------------------" << endl << endl;
                 cout << "Got response from peer server" << endl << endl;
                 cout << p2resp;
                 cout << endl;
@@ -160,6 +168,8 @@ int main(int argc, char* argv[]) {
                     }
                 }
                 // Write this rfc 
+                cout << "----------------------------------------" << endl;
+                cout << "Wrote rfc to RFC/ directory" << endl;
                 string rfc_fname = "RFC/" + srv_req.rfc_ + ".txt";
                 FileHandler::writeStr(file_content, rfc_fname);
 
@@ -169,9 +179,13 @@ int main(int argc, char* argv[]) {
                 string add_msg;
                 srv_req.pack(add_msg);
                 client.send_msg(add_msg);
-
-                cout << "Got message from bootstrap server: " << endl << endl <<
+                
+                cout << "----------------------------------------" << endl;
+                cout << endl << endl;
+                cout << "Sending ADD message to Bootstrap Server" << endl << endl;;
+                cout << "Got message from Bootstrap Server: " << endl << endl <<
                     client.get_msg() << endl << endl;
+                cout << "----------------------------------------" << endl;
                 // cout << recv_msg << endl;
             }
             else if (choice == LIST) {
@@ -194,18 +208,20 @@ int main(int argc, char* argv[]) {
                 ServerRequestMessage srv_req;
                 srv_req.unpack(cmd);
 
-
-                cout << "Sending list request to servrer" << endl;
+                cout << "----------------------------------------" << endl;
+                cout << "Sending list request to Bootstrap Servrer" << endl;
                 string msg;
                 srv_req.pack(msg);
                 client.send_msg(msg);
 
                 ServerResponseMessage resp_msg;
                 string recv_msg = client.get_msg();
-                cout << "Got a reply from server " << endl << endl;
+                cout << "----------------------------------------" << endl;
+                cout << "Got a reply from  Bootstrap Server " << endl << endl;
                 resp_msg.unpack(recv_msg);
                 //resp_msg.format();
                 cout << recv_msg << endl;
+                cout << "----------------------------------------" << endl;
             }
             else
                 break;
