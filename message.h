@@ -241,6 +241,20 @@ public:
         cout << "***************************************" << endl;
     }
 
+    bool hasError() {
+        if (hostname_ == "" or port_ == "" or title_ == "" or rfc_ == "")
+            return true;
+        else
+            return false;
+    }
+
+    bool correctVersion() {
+        if (version_ == VERSION)
+            return true;
+        else 
+            return false;
+    }
+
     void pack(string& packet) {
         switch (method_) {
         case METHOD::ADD:
