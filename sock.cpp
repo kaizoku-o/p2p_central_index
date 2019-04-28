@@ -32,8 +32,7 @@ int main(int argc, char* argv[]) {
         Client client(server_ip, server_port);
         client.create_client();
 
-        /* Should spawn a thread here to listen serve fellow peers */
-        P2Server p2server(9722);
+        P2Server p2server(peer_port);
         p2server.create_server();
         cout << "created peer server " << endl;
 
@@ -128,7 +127,7 @@ int main(int argc, char* argv[]) {
                 if (resp_msg.hostname_.empty())
                     continue;
                 string p2ServerIP = resp_msg.hostname_[0];
-                string p2ServerPort = "9722"; //resp_msg.port_[0];
+                string p2ServerPort = resp_msg.port_[0]; //resp_msg.port_[0];
 
                 PeerRequestMessage prms(client_ip, "MAC OS",
                         PeerRequestMessage::METHOD::GET,
@@ -151,11 +150,23 @@ int main(int argc, char* argv[]) {
             }
             else if (choice == LIST) {
 
-                ServerRequestMessage srv_req("localhost",
-                                             "7793", "SOME RFC",
-                                             "128",
-                                             "1.0",
-                                             ServerRequestMessage::METHOD::LIST);
+                char buff[1024];
+                string stat;
+
+                string cmd(LIST);
+
+                while (true) {
+                    string c_wd;
+                    cin.getline(buff, 1024);
+                    c_wd = string(buff);
+                    if (c_wd == "EOCEOCEOC") {
+                        break;
+                    }
+                    cmd += c_wd + "\n";
+                }
+                
+                ServerRequestMessage srv_req;
+                srv_req.unpack(cmd);
 
 
                 cout << "Sending list request to servrer" << endl;
