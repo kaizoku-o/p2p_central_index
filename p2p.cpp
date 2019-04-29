@@ -136,10 +136,12 @@ int main(int argc, char* argv[]) {
                     }
                 }
                 // Write this rfc 
-                cout << "----------------------------------------" << endl;
-                cout << "Wrote rfc to RFC/ directory" << endl;
-                string rfc_fname = "RFC/" + prms.rfc_ + ".txt";
-                FileHandler::writeStr(file_content, rfc_fname);          
+                if (!file_content.empty()) {
+                    cout << "----------------------------------------" << endl;
+                    cout << "Wrote rfc to RFC/ directory" << endl;
+                    string rfc_fname = "RFC/" + prms.rfc_ + ".txt";
+                    FileHandler::writeStr(file_content, rfc_fname); 
+                }
             }
             else if (choice == LOOKUP) {
                 // Change this if you want to use the code. Can cause buffer
