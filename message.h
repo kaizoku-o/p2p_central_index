@@ -247,13 +247,20 @@ public:
     }
 
     bool hasError() {
-        if (hostname_.empty() or 
-                !is_number(port_) or 
-                !is_number(rfc_) or 
-                title_.empty())
-            return true;
-        else
-            return false;
+        if (method_ == ServerRequestMessage::METHOD::ADD or
+                method_ == ServerRequestMessage::METHOD::LOOKUP) {
+            if (hostname_.empty() or 
+                    !is_number(port_) or 
+                    !is_number(rfc_) or 
+                    title_.empty())
+                return true;
+        }
+        else if (method_ == ServerRequestMessage::METHOD::LIST) {
+           if (hostname_.empty() or
+                !is_number(port_))
+                return true;
+        }
+        return false;
     }
 
     bool correctVersion() {
@@ -374,6 +381,8 @@ public:
                 ss >> msg_word;
                 rfc_ = msg_word;
             }
+            else
+                return;
 
             ss >> msg_word;
             version_ = msg_word;
@@ -383,12 +392,16 @@ public:
                 ss >> msg_word;
                 hostname_ = msg_word;
             }
+            else
+                return;
 
             ss >> msg_word;
             if (PORT_NUM.find_first_of(msg_word) != std::string::npos) {
                 ss >> msg_word;
                 port_ = msg_word;
             }
+            else
+                return;
 
             ss >> msg_word;
             if (TITLE.find_first_of(msg_word) != std::string::npos) {
@@ -409,6 +422,8 @@ public:
                     ss >> msg_word;
                     hostname_ = msg_word;
                 }
+                else 
+                    return;
                 ss >> msg_word;
                 if (PORT_NUM.find_first_of(msg_word) != std::string::npos) {
                     ss >> msg_word;
