@@ -87,6 +87,60 @@ int main(int argc, char* argv[]) {
                 cout << endl << endl;
                 cout << recv_msg << endl;
             }
+            else if (choice == GET) {
+                char buff[1024];
+                string stat;
+
+                string cmd(GET);
+
+                while (true) {
+                    string c_wd;
+                    cin.getline(buff, 1024);
+                    c_wd = string(buff);
+                    if (c_wd == "EOCEOCEOC") {
+                        break;
+                    }
+                    cmd += c_wd + "\n";
+                }
+                PeerRequestMessage prms;
+                prms.unpack(cmd);
+
+                string msg;
+                prms.pack(msg);
+            
+                string p2ServerPort;
+                cout << "Enter the upload port of the peer server: " << endl;
+
+                cin >> p2ServerPort;
+                Client client2(prms.hostname_, atoi(p2ServerPort.c_str()));
+                client2.create_client();
+                client2.send_msg(msg);
+
+                string p2resp;
+                p2resp = client2.get_msg();
+                cout << "----------------------------------------" << endl << endl;
+                cout << "Got response from peer server" << endl << endl;
+                cout << p2resp;
+                cout << endl;
+
+                PeerResponseMessage peerResp;
+                peerResp.unpack(p2resp);
+                
+                string file_content;
+
+                for (int i = 0; i < peerResp.length_.size(); i++) {
+                    vector<string> fc = peerResp.file_content[i];
+
+                    for (auto iter : fc) {
+                        file_content += iter + "\n";
+                    }
+                }
+                // Write this rfc 
+                cout << "----------------------------------------" << endl;
+                cout << "Wrote rfc to RFC/ directory" << endl;
+                string rfc_fname = "RFC/" + prms.rfc_ + ".txt";
+                FileHandler::writeStr(file_content, rfc_fname);          
+            }
             else if (choice == LOOKUP) {
                 // Change this if you want to use the code. Can cause buffer
                 // overflow
