@@ -186,62 +186,6 @@ int main(int argc, char* argv[]) {
 
                 if (resp_msg.hostname_.empty())
                     continue;
-
-                string p2ServerIP = resp_msg.hostname_[0];
-                string p2ServerPort = resp_msg.port_[0]; //resp_msg.port_[0];
-
-                PeerRequestMessage prms(client_ip, "MAC OS",
-                        PeerRequestMessage::METHOD::GET,
-                        srv_req.rfc_,
-                        VERSION);
-                string p2rms;
-                prms.pack(p2rms);
-                cout << "Sending p2s the message: \n";
-                cout << p2rms << endl;
-
-                Client client2(p2ServerIP, atoi(p2ServerPort.c_str()));
-                client2.create_client();
-                client2.send_msg(p2rms);
-                string p2resp;
-                p2resp = client2.get_msg();
-                cout << "----------------------------------------" << endl << endl;
-                cout << "Got response from peer server" << endl << endl;
-                cout << p2resp;
-                cout << endl;
-
-                PeerResponseMessage peerResp;
-                peerResp.unpack(p2resp);
-                
-                string file_content;
-
-                for (int i = 0; i < peerResp.length_.size(); i++) {
-                    vector<string> fc = peerResp.file_content[i];
-
-                    for (auto iter : fc) {
-                        file_content += iter + "\n";
-                    }
-                }
-                // Write this rfc 
-                cout << "----------------------------------------" << endl;
-                cout << "Wrote rfc to RFC/ directory" << endl;
-                string rfc_fname = "RFC/" + srv_req.rfc_ + ".txt";
-                FileHandler::writeStr(file_content, rfc_fname);
-
-                /*
-                // Now send an add request to server
-                srv_req.method_ = ServerRequestMessage::METHOD::ADD;
-                string add_msg;
-                srv_req.pack(add_msg);
-                client.send_msg(add_msg);
-                
-                cout << "----------------------------------------" << endl;
-                cout << endl << endl;
-                cout << "Sending ADD message to Bootstrap Server" << endl << endl;;
-                cout << "Got message from Bootstrap Server: " << endl << endl <<
-                    client.get_msg() << endl << endl;
-                cout << "----------------------------------------" << endl;
-                // cout << recv_msg << endl;
-                */
             }
             else if (choice == LIST) {
 
