@@ -1,9 +1,20 @@
 # P2P Central Index
 
+IMPLEMENTATION:
+This project has been implemented in c++ (c++11)
+
+REQUIREMENTS:
+You must have g++ compiler as well as c++11 support.
+
+MAKE:
+There is a MAKEFILE that has been included with the project.
 To run the project:
 make clean; make
 
 This will generate the p2p executable
+
+
+EXECUTION INSTRUCTIONS:
 Run it using ./p2p
 
 There will be 2 choices:
@@ -44,6 +55,7 @@ RFC/ directory.
 You may want to issue an ADD command after this if you wish to inform the Bootstrap server
 that you are willing to serve this RFC in the future.
 
-Testing:
+TESTING:
 This has been tested on AWS with 3 VMs (1 Server and 2 clients).
+Make sure your ports have been opened and if you're using privileged port use root.
 
