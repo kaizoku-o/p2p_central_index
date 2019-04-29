@@ -59,3 +59,7 @@ TESTING:
 This has been tested on AWS with 3 VMs (1 Server and 2 clients).
 Make sure your ports have been opened and if you're using privileged port use root.
 
+
+AUTHORS:
+Sohail Shaikh (sashaikh 200261274)
+Prashanth Mallyampatti (pmallya 200250501)
