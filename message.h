@@ -81,6 +81,21 @@ public:
         cout << "*******************************************" << endl;
     }
 
+    bool hasError() {
+        if (hostname_.empty() or 
+                !is_number(rfc_)) { 
+            return true;
+        }
+        return false;
+    }
+
+    bool correctVersion() {
+        if (version_ == VERSION)
+            return true;
+        else 
+            return false;
+    }
+
     void pack(string& packet) {
         packet += GET + " ";
         packet += RFC + " ";
@@ -104,6 +119,9 @@ public:
         if (vstrings[1].find_first_of(RFC) != std::string::npos) {
             rfc_ = vstrings[2];
         }
+        else
+            return;
+
         version_ = vstrings[3];
         hostname_ = vstrings[5];
 
@@ -150,7 +168,16 @@ public:
 
     void pack(string& packet) {
         packet += VERSION + " ";
-        packet += OK + " \n";
+
+        string errorCode;
+        if (status_code_ == PeerResponseMessage::STATUS_CODE::BAD_REQUEST)
+            errorCode = BAD;
+        if (status_code_ == PeerResponseMessage::STATUS_CODE::NOT_FOUND)
+            errorCode = NOT_FOUND;
+        if (status_code_ == PeerResponseMessage::STATUS_CODE::VERSION_NOT_SUPPORTED)
+            errorCode = UNSUPPORTED; 
+
+        packet += errorCode + " \n";
         packet += DATE + ": ";
         auto end = std::chrono::system_clock::now();
         std::time_t end_time = std::chrono::system_clock::to_time_t(end);
@@ -169,7 +196,6 @@ public:
                 packet += iter + "\n";
             }
         }
-
     }
 
     void unpack(const string& packet) {

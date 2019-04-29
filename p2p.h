@@ -283,17 +283,9 @@ public:
 
             char buffer[1024] = {0};
             int vals = read(new_sock, buffer, 1024);
-
+	    string inp_msg(buffer);
             PeerRequestMessage prms;
-            prms.unpack(buffer);
-
-            //prms.format();
-
-            // string server_message = "Hi there fellow client! I am a peer!";
-            // cout << "server is sending the message " << server_message << endl;
-
-            vector<string> rfc_fnames;
-            FileHandler::read_directory(rfc_fnames);
+            prms.unpack(inp_msg);
 
             string os("MAC OS");
             vector<string> last_mod;
@@ -301,11 +293,38 @@ public:
             vector<string> type;
             vector<vector<string>> file_content;
 
+	    if (prms.hasError()) {
+		cout << "This is bad request " << endl;
+		PeerResponseMessage pResp  = PeerResponseMessage(os,
+		    last_mod, length, type, file_content,
+		    PeerResponseMessage::STATUS_CODE::BAD_REQUEST);
+		string resp_msg;
+		pResp.pack(resp_msg);
+		send(new_sock, resp_msg.c_str(), resp_msg.length(), 0);
+		continue;
+	    }
+
+	    if (!prms.correctVersion()) {
+		PeerResponseMessage pResp  = PeerResponseMessage(os,
+		    last_mod, length, type, file_content,
+		    PeerResponseMessage::STATUS_CODE::VERSION_NOT_SUPPORTED);
+		string resp_msg;
+		pResp.pack(resp_msg);
+		send(new_sock, resp_msg.c_str(), resp_msg.length(), 0);
+		continue;
+	    }
+
+
+            vector<string> rfc_fnames;
+            FileHandler::read_directory(rfc_fnames);
+
+	    bool file_found = false;
             for (auto rfc_fname : rfc_fnames) {
                 // add check for which rfc you want
                 if (!hasStr(rfc_fname, prms.rfc_))
                     continue;
 
+		file_found = true;
                 string modTime;
                 vector<string> vectStr;
                 int size;
@@ -317,9 +336,17 @@ public:
                 file_content.push_back(vectStr);
             }
 
-            PeerResponseMessage pRespMsg(os, last_mod, length, type,
-                                         file_content,
-                                         PeerResponseMessage::STATUS_CODE::OK);
+	    PeerResponseMessage pRespMsg;
+
+	    if (file_found) {
+		pRespMsg = PeerResponseMessage(os, last_mod, length, type,
+			file_content,
+			PeerResponseMessage::STATUS_CODE::OK);
+	    }
+	    else
+		pRespMsg  = 
+		    PeerResponseMessage(os, last_mod, length, type, file_content, 
+		    PeerResponseMessage::STATUS_CODE::NOT_FOUND);
 
             string resp_msg;
             pRespMsg.pack(resp_msg);
