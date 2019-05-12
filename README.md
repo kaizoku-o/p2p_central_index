@@ -1,3 +1,5 @@
+# This is a peer to peer system for downloading documents with a central index server. More details can be found in the project document
+
 # P2P Central Index
 
 IMPLEMENTATION:
