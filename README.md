@@ -62,4 +62,4 @@ Make sure your ports have been opened and if you're using privileged port use ro
 
 AUTHORS:
 Sohail Shaikh (sashaikh 200261274)
-Prashanth Mallyampatti (pmallya 200250501)
+Prashanth Mallyampatti
